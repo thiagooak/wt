@@ -1,6 +1,6 @@
 [package]
 name = "wt"
-version = "0.1.1"
+version = "0.1.2"
 authors = ["Thiago Carvalho <thiago.oak@gmail.com>"]
 edition = "2018"
 
@@ -8,3 +8,4 @@ edition = "2018"
 
 [dependencies]
 structopt = "0.2.10"
+regex = "1"
