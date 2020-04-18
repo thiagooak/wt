@@ -1,4 +1,5 @@
 use regex::Regex;
+use std::collections::HashMap;
 use structopt::StructOpt;
 
 /// Writing Tools
@@ -18,7 +19,12 @@ fn main() {
     let raw = std::fs::read_to_string(&args.path).unwrap();
     let content = prepare_content(raw, args.html);
 
-    println!("{}", check_sentence_length(content));
+    println!("{}", check_sentence_length(content.clone()));
+
+    let long_words_errors = check_long_words(content.clone());
+    for error in long_words_errors {
+        println!("{}", error);
+    }
 }
 
 fn prepare_content(raw: String, html: bool) -> String {
@@ -103,5 +109,64 @@ fn test_check_sentence_length() {
     assert_eq!(
         check_sentence_length(String::from("Vivamus sollicitudin arcu sit amet elementum fermentum. Vestibulum sed velit in dolor molestie congue. Vestibulum dui quam, pharetra non egestas id, ullamcorper et mauris. Vestibulum blandit felis quis ligula finibus commodo.")),
         String::from("")
+    );
+}
+
+fn check_long_words(content: String) -> Vec<String> {
+    let mut errors = Vec::new();
+
+    let words: HashMap<&str, &str> = [
+        ("approximately", "about"),
+        ("demonstrate", "show"),
+        ("establish", "set up"),
+        ("expenditure", "spending"),
+        ("facility", "plant, club, warehouse, etc"),
+        ("following", "after"),
+        ("however", "but"),
+        ("manufacture", "make"),
+        ("participate", "take part"),
+        ("permit", "let"),
+        ("prior to", "before"),
+        ("sufficient", "enough"),
+        ("utilise", "use"),
+    ]
+    .iter()
+    .cloned()
+    .collect();
+
+    for (long_word, short_word) in &words {
+        if content.find(long_word).is_some() {
+            errors.push(format!("\t{} > {}", long_word, short_word));
+        }
+    }
+
+    if !errors.is_empty() {
+        errors.insert(0, String::from("\nUse simple words"));
+    }
+
+    return errors;
+}
+
+#[test]
+fn test_check_long_words() {
+    let mut sorted_result = check_long_words(String::from(
+        "I'll be home in approximately 20 minutes. I manufacture no excuses.",
+    ));
+
+    sorted_result.sort();
+    assert_eq!(
+        sorted_result,
+        vec![
+            "\tapproximately > about",
+            "\tmanufacture > make",
+            "\nUse simple words",
+        ]
+    );
+
+    let empty_vec: Vec<String> = Vec::new();
+
+    assert_eq!(
+        check_long_words(String::from("I'll be home in about 20 minutes.")),
+        empty_vec
     );
 }
